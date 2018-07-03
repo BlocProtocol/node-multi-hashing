@@ -129,11 +129,15 @@ private:
 	void* base_ptr;
 };
 
+template<size_t MEMORY, size_t ITER, size_t VERSION> class cn_slow_hash;
+using cn_pow_hash = cn_slow_hash<4*1024*1024, 0x40000, 1>;
+using cn_pow_hash_v2 = cn_slow_hash<4*1024*1024, 0x40000, 2>;
+
 template<size_t MEMORY, size_t ITER, size_t VERSION>
 class cn_slow_hash
 {
 public:
-	cn_slow_hash()
+	cn_slow_hash() : borrowed_pad(false)
 	{
 #if !defined(HAS_WIN_INTRIN_API)
 		lpad.set(aligned_alloc(4096, MEMORY));
@@ -144,20 +148,28 @@ public:
 #endif
 	}
 
-	cn_slow_hash (cn_slow_hash&& other) noexcept : lpad(other.lpad.as_byte()), spad(other.spad.as_byte()) 
+	cn_slow_hash (cn_slow_hash&& other) noexcept : lpad(other.lpad.as_byte()), spad(other.spad.as_byte()), borrowed_pad(other.borrowed_pad)
 	{
 		other.lpad.set(nullptr);
 		other.spad.set(nullptr);
 	}
-	
+
+	// Factory function enabling to temporaliy turn v1 object into v2
+	// It is caller's responsibility to ensure that v1 object is not hashing at the same time!!
+	static cn_pow_hash_v2 make_borrowed(cn_pow_hash& t)
+	{
+		return cn_pow_hash_v2(t.lpad.as_void(), t.spad.as_void());
+	}
+
 	cn_slow_hash& operator= (cn_slow_hash&& other) noexcept
-    {
+	{
 		if(this == &other)
 			return *this;
 
 		free_mem();
 		lpad.set(other.lpad.as_void());
 		spad.set(other.spad.as_void());
+		borrowed_pad = other.borrowed_pad;
 		return *this;
 	}
 
@@ -188,6 +200,16 @@ public:
 
 private:
 	static constexpr size_t MASK = ((MEMORY-1) >> 4) << 4;
+	friend cn_pow_hash;
+	friend cn_pow_hash_v2;
+
+	// Constructor enabling v2 hash to borrow v1's buffer
+	cn_slow_hash(void* lptr, void* sptr)
+	{
+		lpad.set(lptr);
+		spad.set(sptr);
+		borrowed_pad = true;
+	}
 
 	inline bool check_override()
 	{
@@ -202,13 +224,13 @@ private:
 			return true;
 		}
 	}
-	
+
 	inline void free_mem()
 	{
 #if !defined(HAS_WIN_INTRIN_API)
-		if(lpad.as_void() != nullptr)
+			if(lpad.as_void() != nullptr)
 			free(lpad.as_void());
-		if(lpad.as_void() != nullptr)
+			if(lpad.as_void() != nullptr)
 			free(spad.as_void());
 #else
 		if(lpad.as_void() != nullptr)
@@ -235,13 +257,11 @@ private:
 
 	cn_sptr lpad;
 	cn_sptr spad;
+	bool borrowed_pad;
 };
 
-using cn_pow_hash_v1 = cn_slow_hash<2*1024*1024, 0x80000, 0>;
-using cn_pow_hash_v2 = cn_slow_hash<4*1024*1024, 0x40000, 1>;
-
-extern template class cn_slow_hash<2*1024*1024, 0x80000, 0>;
 extern template class cn_slow_hash<4*1024*1024, 0x40000, 1>;
+extern template class cn_slow_hash<4*1024*1024, 0x40000, 2>;
 
 } //cn_heavy namespace
 

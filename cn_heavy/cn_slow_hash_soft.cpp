@@ -467,6 +467,11 @@ inline uint64_t _umul128(uint64_t a, uint64_t b, uint64_t* hi)
 #endif 
 #endif
 
+extern "C" void blake256_hash(uint8_t*, const uint8_t*, uint64_t);
+extern "C" void groestl(const unsigned char*, unsigned long long, unsigned char*);
+extern "C" size_t jh_hash(int, const unsigned char*, unsigned long long, unsigned char*);
+extern "C" size_t skein_hash(int, const unsigned char*, size_t, unsigned char*);
+
 template<size_t MEMORY, size_t ITER, size_t VERSION>
 void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len, void* out)
 {
@@ -513,6 +518,10 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len
 			int32_t d  = idx.as_dword(2);
 			int64_t q = n / (d | 5);
 			idx.as_qword(0) = n ^ q;
+
+			if(VERSION > 1)
+				d = ~d;
+
 			idx = scratchpad_ptr(d ^ q);
 		}
 
@@ -538,6 +547,10 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len
 			int32_t d  = idx.as_dword(2); // read bytes 8 - 11
 			int64_t q = n / (d | 5);
 			idx.as_qword(0) = n ^ q;
+
+			if(VERSION > 1)
+				d = ~d;
+
 			idx = scratchpad_ptr(d ^ q);
 		}
 	}
@@ -563,7 +576,7 @@ void cn_slow_hash<MEMORY,ITER,VERSION>::software_hash(const void* in, size_t len
 	}
 }
 
-template class cn_slow_hash<2*1024*1024, 0x80000, 0>;
 template class cn_slow_hash<4*1024*1024, 0x40000, 1>;
+template class cn_slow_hash<4*1024*1024, 0x40000, 2>;
 
 } //cn_heavy namespace
