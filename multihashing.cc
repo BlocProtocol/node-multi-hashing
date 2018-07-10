@@ -467,7 +467,7 @@ NAN_METHOD(cryptonight_heavy) {
 	dbg += input;
 
     uint32_t input_len = Buffer::Length(target);
-	dbg += " (" + std::to_sting(input_len) + ") |";
+	dbg += " (" + std::to_string(input_len) + ") |";
 
     cn_heavy::cn_pow_hash_v2 ctx;
     ctx.hash(input, input_len, output);
