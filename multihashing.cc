@@ -449,6 +449,7 @@ NAN_METHOD(cryptonight) {
     );
 }
 
+#include <string>
 NAN_METHOD(cryptonight_heavy) {
 
     if (info.Length() != 1)
@@ -462,10 +463,23 @@ NAN_METHOD(cryptonight_heavy) {
     char* input = Buffer::Data(target);
     char output[32];
     
+	std::string dbg = "Debug dump ";
+	dbg += input;
+
     uint32_t input_len = Buffer::Length(target);
 
     cn_heavy::cn_pow_hash_v2 ctx;
     ctx.hash(input, input_len, output);
+
+	dbg += " ";
+	for(size_t i=0; i < 32; i++)
+	{
+		const char dig[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+		dbg += dig[uint8_t(output[i]) >> 4];
+		dgb += dig[uint8_t(output[i]) & 0x0f];
+	}
+
+	return THROW_ERROR_EXCEPTION(dbg.c_str());
 
     v8::Local<v8::Value> returnValue = Nan::CopyBuffer(output, 32).ToLocalChecked();
     info.GetReturnValue().Set(returnValue);
