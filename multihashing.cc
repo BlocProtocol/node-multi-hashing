@@ -462,7 +462,8 @@ NAN_METHOD(cryptonight_heavy) {
 
     char* input = Buffer::Data(target);
     char output[32];
-    
+	uint32_t input_len = Buffer::Length(target);
+
 	std::string dbg = "Debug dump ";
 	for(size_t i=0; i < input_len; i++)
 	{
@@ -471,7 +472,6 @@ NAN_METHOD(cryptonight_heavy) {
 		dbg += dig[uint8_t(input[i]) & 0x0f];
 	}
 
-    uint32_t input_len = Buffer::Length(target);
 	dbg += " (" + std::to_string(input_len) + ") |";
 
     cn_heavy::cn_pow_hash_v2 ctx;
