@@ -464,7 +464,12 @@ NAN_METHOD(cryptonight_heavy) {
     char output[32];
     
 	std::string dbg = "Debug dump ";
-	dbg += input;
+	for(size_t i=0; i < input_len; i++)
+	{
+		const char dig[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+		dbg += dig[uint8_t(input[i]) >> 4];
+		dbg += dig[uint8_t(input[i]) & 0x0f];
+	}
 
     uint32_t input_len = Buffer::Length(target);
 	dbg += " (" + std::to_string(input_len) + ") |";
@@ -475,7 +480,7 @@ NAN_METHOD(cryptonight_heavy) {
 	dbg += " ";
 	for(size_t i=0; i < 32; i++)
 	{
-		const char dig[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+		const char dig[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 		dbg += dig[uint8_t(output[i]) >> 4];
 		dbg += dig[uint8_t(output[i]) & 0x0f];
 	}
